@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+      maximum-scale=1.0,user-scalable=no">
+
+<title>Market Check 6</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Market Check 6">
+
+<style>
+
+* {
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body {
+  margin:0;
+  background:#f4f6f8;
+  color:#17202a;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  padding-bottom:85px;
+}
+
+header {
+  background:#111827;
+  color:white;
+  padding:24px 18px;
+  text-align:center;
+}
+
+header h1 {
+  margin:0;
+  font-size:25px;
+}
+
+header p {
+  margin:7px 0 0;
+  opacity:.8;
+}
+
+main {
+  padding:16px;
+}
+
+.card {
+  background:white;
+  border-radius:18px;
+  padding:17px;
+  margin-bottom:14px;
+  box-shadow:0 3px 15px rgba(0,0,0,.06);
+}
+
+.card h2,
+.card h3 {
+  margin-top:0;
+}
+
+.stat-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.stat {
+  background:#f8fafc;
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
+}
+
+.stat strong {
+  display:block;
+  font-size:25px;
+}
+
+button {
+  border:0;
+  border-radius:13px;
+  padding:13px 15px;
+  font-size:15px;
+  cursor:pointer;
+}
+
+.primary {
+  background:#111827;
+  color:white;
+  width:100%;
+}
+
+.good {
+  background:#dcfce7;
+  color:#166534;
+  width:100%;
+}
+
+.low {
+  background:#fef3c7;
+  color:#92400e;
+  width:100%;
+}
+
+.out {
+  background:#fee2e2;
+  color:#991b1b;
+  width:100%;
+}
+
+.danger {
+  background:#991b1b;
+  color:white;
+}
+
+.back {
+  background:#e5e7eb;
+  width:100%;
+  margin-bottom:12px;
+}
+
+input, textarea {
+  width:100%;
+  border:1px solid #d1d5db;
+  border-radius:12px;
+  padding:13px;
+  font-size:16px;
+  margin:7px 0 12px;
+  background:white;
+}
+
+textarea {
+  min-height:90px;
+}
+
+nav {
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:72px;
+  background:white;
+  border-top:1px solid #ddd;
+  display:flex;
+  justify-content:space-around;
+  z-index:100;
+}
+
+nav button {
+  background:transparent;
+  padding:8px 4px;
+  font-size:21px;
+}
+
+nav span {
+  display:block;
+  font-size:10px;
+  margin-top:3px;
+}
+
+.market-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.badge {
+  padding:6px 10px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+.green {
+  background:#dcfce7;
+  color:#166534;
+}
+
+.yellow {
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.red {
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.item {
+  border:1px solid #e5e7eb;
+  border-radius:15px;
+  padding:14px;
+  margin-bottom:10px;
+  background:white;
+}
+
+.small {
+  font-size:12px;
+  color:#6b7280;
+}
+
+.photo-preview {
+  width:100%;
+  max-height:240px;
+  object-fit:cover;
+  border-radius:15px;
+  margin-top:8px;
+}
+
+.empty {
+  text-align:center;
+  color:#6b7280;
+  padding:30px 10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Market Check 6</h1>
+  <p>سیستەمی پشکنینی مارکێت</p>
+</header>
+
+<main id="app"></main>
+
+<nav>
+  <button onclick="home()">
+    🏠
+    <span>سەرەکی</span>
+  </button>
+
+  <button onclick="marketsPage()">
+    🏪
+    <span>مارکێت</span>
+  </button>
+
+  <button onclick="problemsPage()">
+    ⚠️
+    <span>کێشە</span>
+  </button>
+
+  <button onclick="reportPage()">
+    📊
+    <span>ڕاپۆرت</span>
+  </button>
+</nav>
+
+<script>
+
+const KEY = "market_check_6_data";
+
+let data = JSON.parse(localStorage.getItem(KEY)) || {
+  markets: [
+    {id:1,name:"مارکێت 01",items:[]},
+    {id:2,name:"مارکێت 02",items:[]},
+    {id:3,name:"مارکێت 03",items:[]},
+    {id:4,name:"مارکێت 04",items:[]},
+    {id:5,name:"مارکێت 05",items:[]}
+  ],
+  checks: []
+};
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(data));
+}
+
+function today() {
+  return new Date().toLocaleDateString("ku-IQ");
+}
+
+function home() {
+
+  let totalItems = 0;
+
+  data.markets.forEach(m => {
+    totalItems += m.items.length;
+  });
+
+  let problems = data.checks.filter(
+    x => x.status === "low" || x.status === "out"
+  );
+
+  document.getElementById("app").innerHTML = `
+
+    <div class="card">
+      <h2>بەخێربێیت 👋</h2>
+      <p>${today()}</p>
+      <p>ئەمڕۆ ئامادەی پشکنینەکانیت.</p>
+    </div>
+
+    <div class="stat-grid">
+
+      <div class="stat">
+        <strong>${data.markets.length}</strong>
+        مارکێت
+      </div>
+
+      <div class="stat">
+        <strong>${totalItems}</strong>
+        ئایتم
+      </div>
+
+      <div class="stat">
+        <strong>${problems.length}</strong>
+        کێشە
+      </div>
+
+      <div class="stat">
+        <strong>${data.checks.length}</strong>
+        پشکنین
+      </div>
+
+    </div>
+
+    <div class="card">
+      <h3>🏪 مارکێتەکانی ئەمڕۆ</h3>
+      ${data.markets.slice(0,5).map(m => marketCard(m)).join("")}
+    </div>
+
+  `;
+}
+
+function marketCard(market) {
+
+  let problems = data.checks.filter(
+    x => x.marketId === market.id &&
+    (x.status === "low" || x.status === "out")
+  );
+
+  return `
+    <div class="item">
+
+      <div class="market-row">
+
+        <div>
+          <strong>🏪 ${market.name}</strong>
+          <div class="small">
+            ${market.items.length} ئایتم
+          </div>
+        </div>
+
+        <span class="badge ${
+          problems.length
+          ? "yellow"
+          : "green"
+        }">
+          ${problems.length ? problems.length+" کێشە" : "باشە"}
+        </span>
+
+      </div>
+
+      <br>
+
+      <button class="primary"
+        onclick="checkMarket(${market.id})">
+        دەستپێکردنی پشکنین
+      </button>
+
+    </div>
+  `;
+}
+
+function marketsPage() {
+
+  document.getElementById("app").innerHTML = `
+
+    <div class="card">
+      <h2>🏪 مارکێتەکان</h2>
+
+      <input
+        id="newMarket"
+        placeholder="ناوی مارکێتی نوێ..."
+      >
+
+      <button class="primary"
+        onclick="addMarket()">
+        + زیادکردنی مارکێت
+      </button>
+    </div>
+
+    ${data.markets.map(m => marketCard(m)).join("")}
+
+  `;
+}
+
+function addMarket() {
+
+  const input = document.getElementById("newMarket");
+
+  const name = input.value.trim();
+
+  if (!name) {
+    alert("تکایە ناوی مارکێت بنووسە");
+    return;
+  }
+
+  data.markets.push({
+    id:Date.now(),
+    name:name,
+    items:[]
+  });
+
+  save();
+
+  marketsPage();
+}
+
+function checkMarket(id) {
+
+  const market = data.markets.find(m => m.id === id);
+
+  if (!market) return;
+
+  document.getElementById("app").innerHTML = `
+
+    <button class="back" onclick="marketsPage()">
+      ← گەڕانەوە
+    </button>
+
+    <div class="card">
+      <h2>🏪 ${market.name}</h2>
+      <p>ئایتمەکان یەک بە یەک پشکنین بکە.</p>
+    </div>
+
+    ${
+      market.items.length
+      ?
+      market.items.map((item,index) => itemCard(market,item,index)).join("")
+      :
+      `
+        <div class="card empty">
+          📦
+          <br><br>
+          هێشتا هیچ ئایتمێک بۆ ئەم مارکێتە زیاد نەکراوە.
+          <br><br>
+          دواتر لیستی ئایتمەکانمان زیاد دەکەین.
+        </div>
+      `
+    }
+
+  `;
+}
+
+function itemCard(market,item,index) {
+
+  return `
+
+    <div class="item">
+
+      <h3>📦 ${item.name}</h3>
+
+      <button class="good"
+        onclick="checkItem(${market.id},${index},'good')">
+        🟢 باشە
+      </button>
+
+      <br><br>
+
+      <button class="low"
+        onclick="checkItem(${market.id},${index},'low')">
+        🟡 کەمە
+      </button>
+
+      <br><br>
+
+      <button class="out"
+        onclick="checkItem(${market.id},${index},'out')">
+        🔴 نییە
+      </button>
+
+    </div>
+
+  `;
+}
+
+function checkItem(marketId,index,status) {
+
+  const market = data.markets.find(m => m.id === marketId);
+
+  const item = market.items[index];
+
+  data.checks.push({
+    id:Date.now(),
+    marketId:marketId,
+    marketName:market.name,
+    itemName:item.name,
+    status:status,
+    date:today()
+  });
+
+  save();
+
+  alert("تۆمار کرا ✅");
+
+  checkMarket(marketId);
+}
+
+function problemsPage() {
+
+  const problems = data.checks.filter(
+    x => x.status === "low" || x.status === "out"
+  );
+
+  document.getElementById("app").innerHTML = `
+
+    <div class="card">
+      <h2>⚠️ کێشەکان</h2>
+    </div>
+
+    ${
+      problems.length
+      ?
+      problems.reverse().map(p => `
+
+        <div class="card">
+
+          <h3>
+            ${p.status === "out" ? "🔴" : "🟡"}
+            ${p.itemName}
+          </h3>
+
+          <p>🏪 ${p.marketName}</p>
+
+          <p>${p.date}</p>
+
+        </div>
+
+      `).join("")
+      :
+      `
+        <div class="card empty">
+          هیچ کێشەیەک نییە ✅
+        </div>
+      `
+    }
+
+  `;
+}
+
+function reportPage() {
+
+  const good = data.checks.filter(
+    x => x.status === "good"
+  ).length;
+
+  const low = data.checks.filter(
+    x => x.status === "low"
+  ).length;
+
+  const out = data.checks.filter(
+    x => x.status === "out"
+  ).length;
+
+  document.getElementById("app").innerHTML = `
+
+    <div class="card">
+      <h2>📊 ڕاپۆرت</h2>
+      <p>${today()}</p>
+    </div>
+
+    <div class="stat-grid">
+
+      <div class="stat">
+        <strong>${good}</strong>
+        🟢 باش
+      </div>
+
+      <div class="stat">
+        <strong>${low}</strong>
+        🟡 کەم
+      </div>
+
+      <div class="stat">
+        <strong>${out}</strong>
+        🔴 نییە
+      </div>
+
+      <div class="stat">
+        <strong>${data.checks.length}</strong>
+        کۆی پشکنین
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h3>📅 ڕۆژی پشکنین</h3>
+
+      <p>
+        سیستەمەکە دەتوانێت دواتر
+        پلانی تەواوی ٦ ڕۆژی هەفتەکە هەبێت.
+      </p>
+
+    </div>
+
+  `;
+}
+
+home();
+
+</script>
+
+</body>
+</html>
